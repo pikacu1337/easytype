@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru" data-theme="graphite">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EasyType — тренажёр скорости печати</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=PT+Mono&family=PT+Serif:wght@400;700&family=Roboto+Mono:wght@400;500;700&family=Source+Code+Pro:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Применяем сохранённую тему до первой отрисовки, чтобы не было вспышки
+    try {
+      var saved = JSON.parse(localStorage.getItem('easytype:settings') || '{}');
+      if (saved.theme) document.documentElement.dataset.theme = saved.theme;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header class="chrome">
+      <div class="logo">Easy<span>Type</span></div>
+
+      <nav class="config" aria-label="Настройки теста">
+        <div class="group">
+          <button class="opt" data-set="mode" data-value="time">Время</button>
+          <button class="opt" data-set="mode" data-value="words">Слова</button>
+        </div>
+        <div class="group" id="timeOpts">
+          <button class="opt" data-set="time" data-value="15">15</button>
+          <button class="opt" data-set="time" data-value="30">30</button>
+          <button class="opt" data-set="time" data-value="60">60</button>
+          <button class="opt" data-set="time" data-value="120">120</button>
+        </div>
+        <div class="group" id="countOpts">
+          <button class="opt" data-set="count" data-value="10">10</button>
+          <button class="opt" data-set="count" data-value="25">25</button>
+          <button class="opt" data-set="count" data-value="50">50</button>
+          <button class="opt" data-set="count" data-value="100">100</button>
+        </div>
+        <div class="group">
+          <button class="opt" data-set="lang" data-value="ru">Рус</button>
+          <button class="opt" data-set="lang" data-value="en">Eng</button>
+        </div>
+        <div class="group">
+          <button class="opt" data-toggle="punctuation">Знаки</button>
+          <button class="opt" data-toggle="numbers">Цифры</button>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section id="test">
+        <div class="live">
+          <span id="counter">30</span>
+          <span id="liveWpm"></span>
+          <span id="hint"></span>
+        </div>
+        <div id="wordsWrap">
+          <div id="words"><div id="caret"></div></div>
+        </div>
+        <p class="tip chrome"><kbd>Tab</kbd> или <kbd>Esc</kbd> — начать заново</p>
+      </section>
+
+      <section id="result" hidden>
+        <div class="res-main">
+          <div class="stat big">
+            <div class="label">WPM</div>
+            <div class="value" id="rWpm">0</div>
+          </div>
+          <div class="stat big">
+            <div class="label">Точность</div>
+            <div class="value" id="rAcc">0%</div>
+          </div>
+          <div class="res-side">
+            <div class="stat"><div class="label">Raw</div><div class="value" id="rRaw">0</div></div>
+            <div class="stat" title="Верные / неверные / лишние / пропущенные">
+              <div class="label">Символы</div><div class="value" id="rChars">0/0/0/0</div>
+            </div>
+            <div class="stat"><div class="label">Время</div><div class="value" id="rTime">0 с</div></div>
+            <div class="stat"><div class="label">Рекорд</div><div class="value" id="rBest">—</div></div>
+          </div>
+        </div>
+
+        <div id="chartBlock">
+          <div class="legend">
+            <span><i class="lg lg-wpm"></i>WPM</span>
+            <span><i class="lg lg-raw"></i>Raw</span>
+            <span><i class="lg lg-err"></i>Ошибки</span>
+          </div>
+          <div id="chart"></div>
+        </div>
+
+        <div class="res-foot">
+          <span id="rMode"></span>
+          <button id="again" class="opt">Ещё раз <kbd>Tab</kbd></button>
+        </div>
+      </section>
+
+      <div id="keyboard" aria-hidden="true"></div>
+    </main>
+
+    <footer class="chrome">
+      <div class="group" aria-label="Тема">
+        <span class="glabel">Тема</span>
+        <button class="swatch" data-theme="graphite" data-set="theme" data-value="graphite" title="Графит"></button>
+        <button class="swatch" data-theme="paper" data-set="theme" data-value="paper" title="Бумага"></button>
+        <button class="swatch" data-theme="nord" data-set="theme" data-value="nord" title="Север"></button>
+        <button class="swatch" data-theme="terminal" data-set="theme" data-value="terminal" title="Терминал"></button>
+        <button class="swatch" data-theme="sakura" data-set="theme" data-value="sakura" title="Сакура"></button>
+        <button class="swatch" data-theme="midnight" data-set="theme" data-value="midnight" title="Полночь"></button>
+        <button class="swatch" data-theme="mono" data-set="theme" data-value="mono" title="Чёрно-белая"></button>
+      </div>
+
+      <div class="group" aria-label="Звук">
+        <span class="glabel">Звук</span>
+        <select data-select="sound" aria-label="Звук клавиш">
+          <option value="off">Выкл</option>
+          <option value="mech">Механика</option>
+          <option value="soft">Мягкий</option>
+          <option value="thock">Тук</option>
+          <option value="wood">Дерево</option>
+          <option value="typewriter">Машинка</option>
+          <option value="pop">Капля</option>
+          <option value="bubble">Пузырь</option>
+          <option value="glass">Стекло</option>
+          <option value="notes">Ноты</option>
+          <option value="retro">Ретро</option>
+          <option value="whisper">Шорох</option>
+        </select>
+        <input id="volume" type="range" min="0" max="100" step="1" aria-label="Громкость" title="Громкость">
+        <button class="opt" data-toggle="errorSound" title="Отдельный звук при ошибке">Звук ошибки</button>
+      </div>
+
+      <div class="group" aria-label="Шрифт">
+        <span class="glabel">Шрифт</span>
+        <select data-select="font" aria-label="Шрифт">
+          <option value="jetbrains">JetBrains Mono</option>
+          <option value="fira">Fira Code</option>
+          <option value="roboto">Roboto Mono</option>
+          <option value="plex">IBM Plex Mono</option>
+          <option value="source">Source Code Pro</option>
+          <option value="ubuntu">Ubuntu Mono</option>
+          <option value="ptmono">PT Mono</option>
+          <option value="system">Системный</option>
+          <option value="inter">Inter (без засечек)</option>
+          <option value="ptserif">PT Serif (с засечками)</option>
+        </select>
+        <button class="opt" data-step="-1" title="Уменьшить текст" aria-label="Уменьшить текст">A−</button>
+        <span id="sizeLabel">100%</span>
+        <button class="opt" data-step="1" title="Увеличить текст" aria-label="Увеличить текст">A+</button>
+      </div>
+
+      <div class="group">
+        <button class="opt" data-toggle="keyboard">Клавиатура</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="js/words.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+/* ---------- Темы ----------
+   Тема — это шесть переменных. Атрибут data-theme работает на любом элементе,
+   поэтому кнопки-образцы в подвале красятся цветами своей темы. */
+:root,
+[data-theme="graphite"] {
+  --bg: #17181c; --surface: #202227; --text: #e6e4df;
+  --sub: #6a6e78; --accent: #f2a65a; --error: #ef5b5b;
+}
+[data-theme="paper"] {
+  --bg: #f3efe6; --surface: #e8e2d5; --text: #2c2a26;
+  --sub: #a8a193; --accent: #2a7a6f; --error: #cf4332;
+}
+[data-theme="nord"] {
+  --bg: #2e3440; --surface: #3b4252; --text: #eceff4;
+  --sub: #6f7b94; --accent: #88c0d0; --error: #e0707c;
+}
+[data-theme="terminal"] {
+  --bg: #0a0f0b; --surface: #111a13; --text: #c9f5cf;
+  --sub: #456a4d; --accent: #3ddc64; --error: #ff5f56;
+}
+[data-theme="sakura"] {
+  --bg: #fbf0f3; --surface: #f4dfe5; --text: #4b3441;
+  --sub: #cfa6b4; --accent: #c9477f; --error: #b42318;
+}
+[data-theme="midnight"] {
+  --bg: #0e1424; --surface: #171f36; --text: #dce4ff;
+  --sub: #52618c; --accent: #7c9cff; --error: #ff6b81;
+}
+[data-theme="mono"] {
+  --bg: #000; --surface: #161616; --text: #fff;
+  --sub: #707070; --accent: #fff; --error: #a6a6a6;
+}
+/* В чёрно-белой теме красного нет, поэтому ошибка — это инверсия буквы */
+[data-theme="mono"] .word .incorrect,
+[data-theme="mono"] .word .extra {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* ---------- Основа ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html { color-scheme: dark light; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font, "JetBrains Mono", "Cascadia Mono", Consolas, "Courier New", monospace);
+  font-variant-ligatures: none;
+  transition: background-color .3s ease, color .3s ease;
+}
+
+#app {
+  max-width: 1040px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Всё лишнее гаснет, пока идёт набор */
+.chrome { transition: opacity .3s ease; }
+body.focus .chrome { opacity: 0; pointer-events: none; }
+
+/* ---------- Шапка и настройки ---------- */
+header, footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem 1.5rem;
+}
+
+.logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; }
+.logo span { color: var(--accent); }
+
+.config {
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: .25rem .5rem;
+}
+.config .group + .group::before {
+  content: "";
+  width: 2px; height: 1rem;
+  margin: 0 .5rem;
+  border-radius: 2px;
+  background: var(--bg);
+}
+
+.group { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; font-size: .8rem; }
+.glabel { color: var(--sub); margin-right: .5rem; opacity: .7; }
+
+.opt {
+  background: none;
+  border: 0;
+  padding: .4rem .55rem;
+  border-radius: 6px;
+  color: var(--sub);
+  font: inherit;
+  cursor: pointer;
+  transition: color .15s ease;
+}
+.opt:hover { color: var(--text); }
+.opt.active { color: var(--accent); }
+.opt:focus-visible, .swatch:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+select {
+  margin-right: .5rem;
+  padding: .35rem .5rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+option { background: var(--surface); color: var(--text); }
+#sizeLabel { min-width: 3.2em; text-align: center; color: var(--text); }
+
+kbd {
+  font: inherit;
+  font-size: .85em;
+  padding: .1em .45em;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ---------- Область набора ---------- */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.5rem;
+}
+
+#test {
+  --fs-base: clamp(1.2rem, 2.7vw, 1.75rem);
+  /* --scale задаётся кнопками A− / A+ */
+  --fs: calc(var(--fs-base) * var(--scale, 1));
+  --line-h: calc(var(--fs) * 1.9);
+}
+
+.live {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  height: 2rem;
+  margin-bottom: .5rem;
+  font-size: var(--fs-base);
+  color: var(--accent);
+}
+#liveWpm { color: var(--sub); font-size: .7em; }
+#hint { margin-left: auto; color: var(--error); font-size: .5em; }
+
+#wordsWrap { height: calc(var(--line-h) * 3); overflow: hidden; }
+#words {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  margin: 0 -.32em;
+  font-size: var(--fs);
+  user-select: none;
+  transition: transform .2s ease;
+}
+
+.word {
+  height: var(--line-h);
+  line-height: var(--line-h);
+  margin: 0 .32em;
+  color: var(--sub);
+  white-space: nowrap;
+}
+.word span { transition: color .08s ease; }
+.word .correct { color: var(--text); }
+.word .incorrect { color: var(--error); }
+.word .extra { color: var(--error); opacity: .6; }
+/* Слово с ошибкой подчёркивается после перехода к следующему */
+.word.error {
+  background: linear-gradient(var(--error), var(--error)) no-repeat 0 82% / 100% 2px;
+}
+
+#caret {
+  position: absolute;
+  left: 0; top: 0;
+  width: .1em;
+  height: 1.25em;
+  margin-left: -.05em;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: transform .1s cubic-bezier(.2, .8, .2, 1);
+  will-change: transform;
+}
+#caret.jump { transition: none; }
+body:not(.typing) #caret { animation: blink 1.1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+.tip { margin: 1.5rem 0 0; text-align: center; font-size: .75rem; color: var(--sub); }
+
+/* ---------- Экранная клавиатура ---------- */
+#keyboard {
+  --k: clamp(1.4rem, 5.4vw, 2.9rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+.krow { display: flex; }
+.key {
+  width: calc(var(--k) * var(--w, 1));
+  height: var(--k);
+  padding: calc(var(--k) * .07);
+}
+.cap {
+  position: relative;
+  width: 100%; height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--k) * .2);
+  background: var(--surface);
+  color: var(--sub);
+  font-size: calc(var(--k) * .3);
+  transition: transform .25s ease, background-color .35s ease, color .35s ease, box-shadow .35s ease;
+}
+/* Засечки на F и J — как на настоящей клавиатуре */
+.key.home .cap::before {
+  content: "";
+  position: absolute;
+  bottom: 14%;
+  width: 22%; height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: .6;
+}
+
+/* Нажатие: клавиша мгновенно «проваливается» и загорается, а отпускается плавно */
+.key.pressed .cap {
+  transform: translateY(2px) scale(.93);
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: 0 0 1.4em color-mix(in srgb, var(--accent) 55%, transparent);
+  transition-duration: .04s;
+}
+.key.pressed.bad .cap {
+  background: var(--error);
+  box-shadow: 0 0 1.4em color-mix(in srgb, var(--error) 55%, transparent);
+}
+.cap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.key.bad .cap::after { border-color: var(--error); }
+.key.hit .cap::after { animation: ring .4s ease-out; }
+@keyframes ring {
+  from { opacity: .7; transform: scale(1); }
+  to   { opacity: 0;  transform: scale(1.5); }
+}
+
+/* ---------- Результаты ---------- */
+#result { display: flex; flex-direction: column; gap: 1.5rem; animation: rise .35s ease; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+.res-main { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem 3rem; }
+.stat .label { font-size: .8rem; color: var(--sub); }
+.stat .value { font-size: 1.25rem; color: var(--text); }
+.stat.big .label { font-size: 1.1rem; }
+.stat.big .value { font-size: 4rem; line-height: 1; font-weight: 500; color: var(--accent); }
+.res-side { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin-left: auto; }
+#rBest.new { color: var(--accent); }
+
+.legend { display: flex; gap: 1.25rem; margin-bottom: .5rem; font-size: .75rem; color: var(--sub); }
+.legend span { display: inline-flex; align-items: center; gap: .45rem; }
+.lg { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--accent); }
+.lg-raw { border-top: 2px dashed var(--sub); }
+.lg-err { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--error); }
+
+#chart { position: relative; }
+#chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+#chart text { font-family: inherit; font-size: 10px; fill: var(--sub); }
+#chart .grid { stroke: var(--surface); stroke-width: 1; }
+#chart .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+#chart .line-wpm { stroke: var(--accent); }
+#chart .line-raw { stroke: var(--sub); stroke-dasharray: 5 5; }
+#chart .err { fill: var(--error); stroke: var(--bg); stroke-width: 2; }
+#chart .cross { stroke: var(--sub); stroke-width: 1; }
+#chart .dot { stroke: var(--bg); stroke-width: 2; }
+#chart .dot-wpm { fill: var(--accent); }
+#chart .dot-raw { fill: var(--sub); }
+#chart .end-label { fill: var(--text); }
+.tooltip {
+  position: absolute;
+  top: 0; left: 0;
+  padding: .4rem .6rem;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: .72rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgb(0 0 0 / .18);
+}
+.tooltip b { color: var(--sub); font-weight: 400; }
+
+.res-foot { display: flex; align-items: center; justify-content: space-between; font-size: .8rem; color: var(--sub); }
+body.done #keyboard { display: none; }
+
+/* ---------- Подвал ---------- */
+footer { justify-content: center; gap: .75rem 2rem; }
+
+.swatch {
+  width: 1.15rem; height: 1.15rem;
+  margin: 0 .2rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--sub);
+  /* цвета берутся из темы самого образца */
+  background: radial-gradient(circle, var(--accent) 0 38%, var(--bg) 42%);
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+.swatch:hover { transform: scale(1.15); }
+.swatch.active { border-color: var(--accent); transform: scale(1.15); }
+
+#volume {
+  width: 5rem;
+  margin-right: .5rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  #app { padding: 1rem; }
+  header { justify-content: center; }
+  .res-side { margin-left: 0; }
+  .stat.big .value { font-size: 3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "easytype",
+  "productName": "EasyType",
+  "version": "1.0.0",
+  "description": "Тренажёр скорости печати",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "npx --yes electron@44.7.0 .",
+    "build": "npx --yes @electron/packager@20.3.0 . EasyType --platform=win32 --arch=x64 --electron-version=44.7.0 --out=dist --overwrite --asar --icon=electron/icon.ico --ignore=\"^/(dist|\\.claude)($|/)\" --win32metadata.ProductName=EasyType --win32metadata.FileDescription=EasyType"
+  }
+}
